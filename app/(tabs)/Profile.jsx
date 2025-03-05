@@ -1,105 +1,137 @@
-import { View, Text, StyleSheet,StatusBar , TouchableOpacity, ScrollView} from 'react-native'
-import React from 'react'
+import React from 'react';
+import { 
+  View, Text, StyleSheet, StatusBar, TouchableOpacity, ScrollView, SafeAreaView 
+} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuth } from '../context/authContext';
+import { useNavigation } from '@react-navigation/native';
 
 export default function Profile() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const navigation = useNavigation();
 
   const handleLogout = async () => {
-    console.log("Pressout logout")
+    console.log("Logging out...");
     await logout();
-    
-  }
+  };
+
   return (
-    <View style={styles.container}>
-    <StatusBar barStyle="dark-content" />
-    <View style={styles.header}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
+      {/* Header */}
+      <View style={styles.header}>
         <Text style={styles.titles}>Profile</Text>
-        <Ionicons name="person" size={29} color="black" style={{marginRight: 10}} />
-        
-  
-    </View>
+        <Ionicons name="person" size={29} color="black" style={{ marginRight: 10 }} />
+      </View>
+
+      {/* Scrollable Content */}
       <ScrollView showsVerticalScrollIndicator={false}>
-        <TouchableOpacity
-                            style={[styles.buttonStyle, { backgroundColor: '#5865F2' }]}
-                            onPress={handleLogout}
-                        >
-                            <Text style={styles.buttonText}> Logout</Text>
-                        </TouchableOpacity>
-        </ScrollView>
-    </View>
+
+        {/* Profile Details */}
+        <View style={styles.profileCard}>
+          <Text style={styles.heading}>Profile Information</Text>
+
+          <View style={styles.card}>
+            <Text style={styles.label}>Name:</Text>
+            <Text style={styles.value}>{user?.username || 'N/A'}</Text>
+
+            <Text style={styles.label}>Email:</Text>
+            <Text style={styles.value}>{user?.email || 'N/A'}</Text>
+
+            <Text style={styles.label}>GitHub ID:</Text>
+            <Text style={styles.value}>{user?.gitHubId || 'N/A'}</Text>
+
+            <Text style={styles.label}>Phone Number:</Text>
+            <Text style={styles.value}>{user?.phoneNumber || 'N/A'}</Text>
+          </View>
+
+          
+
+          <TouchableOpacity
+          style={[styles.buttonStyle, { backgroundColor: '#5865F2' }]}
+          onPress={handleLogout}
+        >
+          <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={[styles.buttonStyle, { backgroundColor: '#5865F2' }]} onPress={() => navigation.goBack()}>
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F5F5F5',
     padding: 16,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginLeft: 10,
-    marginBottom: 20
+    marginBottom: 20,
   },
   titles: {
-    fontFamily: 'outfit-bold',
-    fontSize: 35,
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  profileCard: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  heading: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
   card: {
-    backgroundColor: '#5865F2',
+    width: '100%',
+    backgroundColor: '#FFF',
+    padding: 20,
     borderRadius: 10,
-    overflow: 'hidden',
-    marginBottom: 16,
-    elevation: 4,
+    elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
-  image: {
-    width: '100%',
-    height: 200,
-  },
-  textContainer: {
-    padding: 12,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 18,
+  label: {
+    fontSize: 16,
     fontWeight: 'bold',
+    marginTop: 10,
     color: '#333',
-    flex: 1,
   },
-  flag: {
-    width: 30,
-    height: 20,
-    marginLeft: 10,
+  value: {
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#555',
   },
   buttonStyle: {
     marginTop: 20,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    backgroundColor: 'black',
-},
-  description: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
+    padding: 12,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+  },
+  button: {
+    marginTop: 20,
+    backgroundColor: '#007bff',
+    padding: 12,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontSize: 20,
-    fontFamily: 'outfit-bold',
-},
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
+

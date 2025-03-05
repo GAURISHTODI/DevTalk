@@ -8,14 +8,16 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 import { ToastAndroid } from 'react-native';
 
-export const doCreateUserWithEmailAndPassword = async (email, password, name) => {
+export const doCreateUserWithEmailAndPassword = async (email, password, username, phoneNumber, gitHubID) => {
   try {
     // Create user in Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     // Create user document in Firestore
     await setDoc(doc(db, 'users', userCredential.user?.uid), {
-      name,
+      username,
+      phoneNumber,
+      gitHubID,
       userId: userCredential.user.uid
     });
     return {sucess: true, data: userCredential?.user}

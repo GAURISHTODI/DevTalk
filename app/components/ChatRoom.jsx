@@ -18,6 +18,9 @@ import { useAuth } from '../context/authContext';
 import { db } from '../firebase/firebaseConfig';
 import Entypo from '@expo/vector-icons/Entypo';
 import { Highlight, themes } from 'prism-react-renderer';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 
 import { 
@@ -132,7 +135,7 @@ export default function ChatRoom() {
         lastMessageTimestamp: null,
         userOne: user.uid,
         userTwo: userTwoId,
-        userOneName: user.displayName || user.email || 'Anonymous',
+        userOneName: user.name || user.email || 'Anonymous',
         userTwoName: userTwoName || userTwoEmail || 'Anonymous'
       };
   
@@ -203,7 +206,7 @@ export default function ChatRoom() {
         senderId: user.uid,
         text: message.trim(),
         createdAt: serverTimestamp(),
-        senderName: user.displayName || user.name || user.email,
+        senderName: user.name  || user.displayName || user.email,
         receiverId: userTwoId,
         replyTo: replyTo ? {
           id: replyTo.id,
@@ -254,7 +257,7 @@ export default function ChatRoom() {
           <View style={styles.replyContainer}>
             <Text style={[
               styles.replyText, 
-              { color: isCurrentUserMessage ? 'rgba(255,255,255,0.7)' : '#666' }
+              { color: isCurrentUserMessage ? 'black' : '#666' }
             ]}>
               Replying to {item.replyTo.senderName}
             </Text>
@@ -262,7 +265,7 @@ export default function ChatRoom() {
               styles.replyOriginalText, 
               { 
                 fontStyle: 'italic', 
-                color: isCurrentUserMessage ? 'rgba(255,255,255,0.9)' : '#333' 
+                color: isCurrentUserMessage ? 'black' : '#333' 
               }
             ]} numberOfLines={2}>
               {item.replyTo.text}
@@ -311,6 +314,19 @@ export default function ChatRoom() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{userTwoName || userTwoEmail}</Text>
+        
+        <View style={{flexDirection:'row', gap: 30}}>
+          <TouchableOpacity>
+            <AntDesign name="github" size={20} color="black" />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <Ionicons name="call" size={20} color="black" />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <FontAwesome name="video-camera" size={20} color="black" />
+          </TouchableOpacity>
+        </View>
+
       </View>
 
       {/* Reply Preview */}
@@ -372,9 +388,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#e1e1e1',
+    flexDirection: 'row',
+    justifyContent:"space-around"
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: 'bold',
   },
   messageList: {
@@ -397,9 +415,11 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: '#000',
+    fontFamily:'outfit-medium'
   },
   sentMessageText: {
     color: 'white',
+     fontFamily:'outfit-medium'
   },
   inputContainer: {
     flexDirection: 'row',
@@ -437,11 +457,13 @@ const styles = StyleSheet.create({
   },
   replyText: {
     fontSize: 12,
-    color: '#666',
+    color: 'black',
+     fontFamily:'outfit-bold'
   },
   replyOriginalText: {
     fontSize: 14,
     fontStyle: 'italic',
+    color:'black'
   },
   replyPreviewContainer: {
     flexDirection: 'row',
@@ -452,7 +474,8 @@ const styles = StyleSheet.create({
   },
   replyPreviewText: {
     flex: 1,
-    padding:5,
+    padding: 5,
+    color:'black'
     
   },
   cancelReplyText: {
@@ -477,7 +500,7 @@ fontFamily:'outfit-bold'
   },
   replyButtonText: {
     color: 'black',
-    fontSize: 12,
+    fontSize: 15,
   },
   emptyListContainer: {
     flex: 1,
@@ -486,7 +509,7 @@ fontFamily:'outfit-bold'
     marginTop: height * 0.3,
   },
   emptyListText: {
-    color: '#888',
+    color: 'black',
     fontSize: 16,
   },
 });

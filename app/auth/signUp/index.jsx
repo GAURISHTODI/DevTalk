@@ -11,6 +11,8 @@ const SignUp = () => {
     const { user,register, isLoading: contextLoading} = useAuth();
 
     const [name, setName] = useState('');
+    const [phone, setPhone] = useState('')
+    const [github, setGithub]= useState('')
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSigningUp, setIsSigningUp] = useState(false);
@@ -28,7 +30,7 @@ const SignUp = () => {
     const onSubmit = async () => {
         // Validate inputs
         if (!name || !email || !password) {
-            ToastAndroid.show("Please fill in all fields", ToastAndroid.BOTTOM);
+            ToastAndroid.show("Minimum requirements are name, email and password", ToastAndroid.BOTTOM);
             return;
         }
 
@@ -44,7 +46,7 @@ const SignUp = () => {
             
             try {
                 // Modify your create user function to accept name as third parameter
-                let response = await register(email, password, name)
+                let response = await register(email, password, name, phone, github)
                 console.log(response)
                 ToastAndroid.show("Account Created Successfully", ToastAndroid.BOTTOM);
                 // Navigation will be handled by useEffect
@@ -80,20 +82,11 @@ const SignUp = () => {
                 <Ionicons name="arrow-back-outline" size={24} color="black" />
             </TouchableOpacity>
             
-            <Text style={{ fontFamily: 'outfit-bold', fontSize: 25, marginTop: 20 }}>
+            <Text style={{ fontFamily: 'outfit-bold', fontSize: 25, marginTop: 0 }}>
                 Create New Account
             </Text>
 
-            <View style={{ marginTop: 30 }}>
-                <Text style={Styles.inptext}>NAME</Text>
-                <TextInput 
-                    style={Styles.input} 
-                    placeholder='Enter Name'
-                    value={name}
-                    onChangeText={setName}
-                />
-
-                <Text style={Styles.inptext}>EMAIL</Text>
+            <Text style={Styles.inptext}>EMAIL</Text>
                 <TextInput 
                     style={Styles.input} 
                     placeholder='Enter Email'
@@ -112,7 +105,31 @@ const SignUp = () => {
                     onChangeText={setPassword}
                 />
 
-                <View style={{ marginTop: 40 }}>
+            <View style={{ marginTop: 30 }}>
+                <Text style={Styles.inptext}>NAME</Text>
+                <TextInput 
+                    style={Styles.input} 
+                    placeholder='Enter Name'
+                    value={name}
+                    onChangeText={setName}
+                />
+                <Text style={Styles.inptext}>PHONE</Text>
+                <TextInput 
+                    style={Styles.input} 
+                    placeholder='Enter Phone number'
+                    value={phone}
+                    onChangeText={setPhone}
+                />
+
+                <Text style={Styles.inptext}>GITHUB</Text>
+                <TextInput 
+                    style={Styles.input} 
+                    placeholder='Enter GitHub ID'
+                    value={github}
+                    onChangeText={setGithub}
+                />
+
+                <View style={{ marginTop: 0 }}>
                     <TouchableOpacity 
                         style={[
                             Styles.buttonStyle, 

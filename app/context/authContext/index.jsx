@@ -1,17 +1,16 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { onAuthStateChanged } from 'firebase/auth';
-import {auth} from './../../firebase/firebaseConfig'
-import { doCreateUserWithEmailAndPassword } from './../../firebase/auth';
-import { doSignInWithEmailAndPassword } from './../../firebase/auth';
-import { signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from './../../firebase/firebaseConfig';
+import { doCreateUserWithEmailAndPassword, doSignInWithEmailAndPassword } from './../../firebase/auth';
 import { useRouter } from 'expo-router';
-import { getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from './../../firebase/firebaseConfig'; // 🔥 Added missing import
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const router= useRouter()
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -22,26 +21,39 @@ export const AuthProvider = ({ children }) => {
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
       setUser(userData);
       setIsAuthenticated(true);
-
     } catch (error) {
       console.error('Error storing user data:', error);
     }
   };
 
+  // Fetch additional user data from Firestore
   const updateUserData = async (userId) => {
-    const docRef = doc(db, 'users', userId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      let data = docSnap.data();
-        setUser({...user, username: data.name, userId: data.userID})
+    try {
+      const docRef = doc(db, 'users', userId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        let data = docSnap.data();
+
+        // 🔥 Ensure githubId and phoneNumber default to null if they don’t exist
+        setUser((prevUser) => ({
+          ...prevUser,
+          username: data.name || '',
+          userId: data.userID || '',
+          githubId: data.githubId || null,
+          phoneNumber: data.phoneNumber || null,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
     }
-  }
+  };
 
   // Retrieve user data from AsyncStorage
-  const getUserData = async() => {
+  const getUserData = async () => {
     try {
       const storedUserData = await AsyncStorage.getItem('userData');
-      if (storedUserData !== null) {
+      if (storedUserData) {
         const parsedUserData = JSON.parse(storedUserData);
         setUser(parsedUserData);
         setIsAuthenticated(true);
@@ -72,12 +84,11 @@ export const AuthProvider = ({ children }) => {
         const userData = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
-          displayName: firebaseUser.name
+          displayName: firebaseUser.displayName || '',
         };
-        console.log("Here is my user's data", userData )
+        console.log("Here is my user's data", userData);
         await storeUserData(userData);
-        updateUserData(userData.uid);
-        
+        await updateUserData(userData.uid);
       } else {
         await removeUserData();
       }
@@ -102,35 +113,33 @@ export const AuthProvider = ({ children }) => {
       const userData = {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
-        displayName: userCredential.user.displayName
+        displayName: userCredential.user.displayName || '',
       };
 
       await storeUserData(userData);
-      console.log("We are at least here");
+      console.log("User logged in successfully");
       return userCredential.user;
     } catch (error) {
-      console.log("We are here");
       console.error('Login error:', error);
       throw error;
     }
   };
-  
 
   // Logout method
   const logout = async () => {
     try {
       await signOut(auth);
       await removeUserData();
-      router.replace('../../Login')
+      router.replace('../../Login');
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
-  // Register method
-  const register = async (email, password, username) => {
+  // Register method (🔥 Fixed missing parameters)
+  const register = async (email, password, username , phoneNumber = null, githubId = null) => {
     try {
-      const user = await doCreateUserWithEmailAndPassword(email, password, username);
+      const user = await doCreateUserWithEmailAndPassword(email, password, username, phoneNumber, githubId);
       return user;
     } catch (error) {
       console.error('Registration error:', error);

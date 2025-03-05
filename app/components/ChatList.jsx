@@ -28,7 +28,6 @@ export default function ChatList({ users }) {
       <View style={styles.userInfoContainer}>
         <View style={styles.userTextContainer}>
           <Text style={styles.userName}>{item.name}</Text>
-          <Text style={styles.userEmail}>{item.email}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -46,7 +45,7 @@ export default function ChatList({ users }) {
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={onRefresh} 
-            colors={['lightblue']} />}
+            colors={['#5865F2']} />}
       />
     </View>
   );
