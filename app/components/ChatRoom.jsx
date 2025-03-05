@@ -10,15 +10,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../context/authContext';
 import { db } from '../firebase/firebaseConfig';
-// import SyntaxHighlighter from 'react-native-syntax-highlighter';
-// import { atomOneDark } from 'react-native-syntax-highlighter/styles/hljs';
-
 import Entypo from '@expo/vector-icons/Entypo';
+import { Highlight, themes } from 'prism-react-renderer';
+
+
 import { 
   collection, 
   addDoc, 
@@ -33,6 +34,49 @@ import {
 
 const { width, height } = Dimensions.get('window');
 
+// CodeBlock Component for Syntax Highlighting
+const CodeBlock = ({ code, language = 'javascript' }) => {
+  return (
+    <View style={{ maxHeight: 200 }}> 
+      <ScrollView 
+        horizontal 
+        style={{ 
+          backgroundColor: '#f4f4f4', 
+          borderRadius: 5, 
+          padding: 10 
+        }}
+      >
+        <Highlight
+          code={code}
+          language={language}
+          theme={themes.oneLight}
+        >
+          {({ tokens, getLineProps, getTokenProps }) => (
+            <View>
+              {tokens.map((line, i) => (
+                <View key={i} {...getLineProps({ line })}>
+                  {line.map((token, key) => (
+                    <Text  // This is already correct
+                      key={key} 
+                      {...getTokenProps({ token })}
+                      style={{ 
+                        fontFamily: 'monospace',
+                        fontSize: 12 
+                      }}
+                    >
+                      {token.content || ' '}
+                    </Text>
+                  ))}
+                </View>
+              ))}
+            </View>
+          )}
+        </Highlight>
+      </ScrollView>
+    </View>
+  );
+};
+
 export default function ChatRoom() {
   const { userTwoId, userTwoName, userTwoEmail } = useLocalSearchParams();
   const { user } = useAuth();
@@ -43,7 +87,8 @@ export default function ChatRoom() {
   const flatListRef = useRef(null);
 
   // Simplified code detection regex
-  const CODE_REGEX = /```(\w+)?\n([\s\S]*?)```/;
+  const CODE_REGEX = /```(\w+)?\n?([\s\S]*?)```/;
+
 
   // Parse message for code snippets
   const parseMessage = (text) => {
@@ -51,6 +96,7 @@ export default function ChatRoom() {
     if (codeMatch) {
       const language = codeMatch[1] || 'javascript';
       const code = codeMatch[2].trim();
+      console.log('Code Detected:', { language, code });
       return { 
         hasCode: true, 
         language, 
@@ -186,7 +232,6 @@ export default function ChatRoom() {
     flatListRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
   
-
   useEffect(() => {
     if (chatRoomId) {
       return fetchMessages();
@@ -237,15 +282,10 @@ export default function ChatRoom() {
   
         {/* Code highlighting */}
         {item.parsedMessage.hasCode && (
-          <View style={styles.codeContainer}>
-            <SyntaxHighlighter
-              language={item.parsedMessage.language || 'javascript'}
-              style={atomOneLight}
-              highlighter="hljs"
-            >
-              {item.parsedMessage.code}
-            </SyntaxHighlighter>
-          </View>
+          <CodeBlock 
+            code={item.parsedMessage.code} 
+            language={item.parsedMessage.language || 'javascript'} 
+          />
         )}
   
         <TouchableOpacity 
@@ -287,17 +327,15 @@ export default function ChatRoom() {
 
       {/* Messages List */}
       <FlatList
-        ref={flatListRef}
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMessage}
-        contentContainerStyle={styles.messageList}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyListContainer}>
-            <ActivityIndicator size="large" color="#5865F2" />
-          </View>
-        )}
-      />
+  ref={flatListRef}
+  data={messages}
+  keyExtractor={(item) => item.id}
+  renderItem={renderMessage}
+  contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }} // Add paddingBottom for input box space
+  onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+  onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+/>
+
 
       {/* Input Container */}
       <View style={styles.inputContainer}>
@@ -321,6 +359,7 @@ export default function ChatRoom() {
     </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
