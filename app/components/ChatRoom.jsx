@@ -9,21 +9,26 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useAuth } from '../context/authContext';
 import { db } from '../firebase/firebaseConfig';
-import SyntaxHighlighter from 'react-native-syntax-highlighter';
+// import SyntaxHighlighter from 'react-native-syntax-highlighter';
+// import { atomOneDark } from 'react-native-syntax-highlighter/styles/hljs';
+
+import Entypo from '@expo/vector-icons/Entypo';
 import { 
   collection, 
   addDoc, 
   query, 
-  where, 
   orderBy,
   serverTimestamp,
   onSnapshot,
-  limit
+  doc,
+  setDoc,
+  updateDoc
 } from 'firebase/firestore';
 
 const { width, height } = Dimensions.get('window');
@@ -34,19 +39,18 @@ export default function ChatRoom() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
+  const [chatRoomId, setChatRoomId] = useState(null);
   const flatListRef = useRef(null);
 
-  // Create a unique chat room ID (sorted to ensure consistency)
-  const chatRoomId = [user.uid, userTwoId].sort().join('_');
-
-  // Code detection regex (improved)
+  // Simplified code detection regex
   const CODE_REGEX = /```(\w+)?\n([\s\S]*?)```/;
 
+  // Parse message for code snippets
   const parseMessage = (text) => {
     const codeMatch = text.match(CODE_REGEX);
     if (codeMatch) {
       const language = codeMatch[1] || 'javascript';
-      const code = codeMatch[2];
+      const code = codeMatch[2].trim();
       return { 
         hasCode: true, 
         language, 
@@ -57,14 +61,99 @@ export default function ChatRoom() {
     return { hasCode: false, text };
   };
 
+  // Generate a consistent chatroom ID for two users
+  const generateChatRoomId = (uid1, uid2) => {
+    return [uid1, uid2].sort().join('_');
+  };
+
+  // Comprehensive chatroom initialization
+  const initializeChatRoom = useCallback(async () => {
+    if (!user?.uid || !userTwoId) {
+      console.error('Missing user information');
+      Alert.alert('Error', 'Unable to initialize chat room');
+      return null;
+    }
+  
+    const roomId = generateChatRoomId(user.uid, userTwoId);
+    
+    try {
+      const roomRef = doc(db, 'chatrooms', roomId);
+      
+      const chatRoomData = {
+        participants: [user.uid, userTwoId],
+        createdAt: serverTimestamp(),
+        lastMessage: null,
+        lastMessageTimestamp: null,
+        userOne: user.uid,
+        userTwo: userTwoId,
+        userOneName: user.displayName || user.email || 'Anonymous',
+        userTwoName: userTwoName || userTwoEmail || 'Anonymous'
+      };
+  
+      await setDoc(roomRef, chatRoomData, { merge: true });
+  
+      return roomId;
+    } catch (error) {
+      console.error('Chatroom initialization error:', error);
+      Alert.alert('Error', `Could not initialize chat room: ${error.message}`);
+      return null;
+    }
+  }, [user.uid, userTwoId, userTwoName, userTwoEmail]);
+
+  // Enhanced message fetching
+  const fetchMessages = useCallback(() => {
+    if (!chatRoomId) return () => {};
+
+    const messagesRef = collection(db, 'chatrooms', chatRoomId, 'messages');
+    const q = query(messagesRef, orderBy('createdAt', 'asc'));
+
+    const unsubscribe = onSnapshot(q, 
+      (querySnapshot) => {
+        const fetchedMessages = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          parsedMessage: parseMessage(doc.data().text)
+        }));
+
+        setMessages(fetchedMessages);
+      }, 
+      (error) => {
+        console.error('Error fetching messages:', error);
+        Alert.alert('Fetch Error', `Unable to load messages: ${error.message}`);
+      }
+    );
+
+    return unsubscribe;
+  }, [chatRoomId]);
+
+  // Unified effect for chatroom and message initialization
+  useEffect(() => {
+    let unsubscribe = null;
+
+    const setupChatRoom = async () => {
+      const roomId = await initializeChatRoom();
+      if (roomId) {
+        setChatRoomId(roomId);
+        unsubscribe = fetchMessages();
+      }
+    };
+
+    setupChatRoom();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [initializeChatRoom, fetchMessages]);
+
+  // Send message function
   const sendMessage = async () => {
-    if (message.trim() === '') return;
+    if (message.trim() === '' || !chatRoomId) return;
 
     try {
       const parsedMessage = parseMessage(message.trim());
 
-      await addDoc(collection(db, 'chats'), {
-        chatRoomId,
+      const messagesRef = collection(db, 'chatrooms', chatRoomId, 'messages');
+      await addDoc(messagesRef, {
         senderId: user.uid,
         text: message.trim(),
         createdAt: serverTimestamp(),
@@ -78,7 +167,12 @@ export default function ChatRoom() {
         codeLanguage: parsedMessage.hasCode ? parsedMessage.language : null
       });
 
-      // Reset reply and message
+      const roomRef = doc(db, 'chatrooms', chatRoomId);
+      await updateDoc(roomRef, {
+        lastMessage: message.trim(),
+        lastMessageTimestamp: serverTimestamp()
+      });
+
       setMessage('');
       setReplyTo(null);
     } catch (error) {
@@ -87,84 +181,82 @@ export default function ChatRoom() {
     }
   };
 
-  const fetchMessages = useCallback(() => {
-    const q = query(
-      collection(db, 'chats'),
-      where('chatRoomId', '==', chatRoomId),
-      orderBy('createdAt', 'asc'),
-      limit(100) // Limit to last 100 messages for performance
-    );
-
-    return onSnapshot(q, (querySnapshot) => {
-      const fetchedMessages = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        parsedMessage: parseMessage(doc.data().text)
-      }));
-
-      setMessages(fetchedMessages);
-    }, (error) => {
-      console.error('Error fetching messages:', error);
-      Alert.alert('Fetch Error', 'Unable to load messages.');
-    });
-  }, [chatRoomId]);
-
-  useEffect(() => {
-    const unsubscribe = fetchMessages();
-    return () => unsubscribe();
-  }, [fetchMessages]);
-
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     flatListRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
+  
 
+  useEffect(() => {
+    if (chatRoomId) {
+      return fetchMessages();
+    }
+  }, [chatRoomId]);
+  
   const renderMessage = ({ item }) => {
     const isCurrentUserMessage = item.senderId === user.uid;
-
+  
     return (
       <View style={[
         styles.messageContainer,
-        isCurrentUserMessage ? styles.sentMessage : styles.receivedMessage
+        {
+          alignSelf: isCurrentUserMessage ? 'flex-end' : 'flex-start',
+          backgroundColor: isCurrentUserMessage ? '#5865F2' : '#e9ecef'
+        }
       ]}>
         {/* Reply reference */}
         {item.replyTo && (
           <View style={styles.replyContainer}>
-            <Text style={styles.replyText}>
+            <Text style={[
+              styles.replyText, 
+              { color: isCurrentUserMessage ? 'rgba(255,255,255,0.7)' : '#666' }
+            ]}>
               Replying to {item.replyTo.senderName}
             </Text>
-            <Text style={styles.replyOriginalText} numberOfLines={2}>
+            <Text style={[
+              styles.replyOriginalText, 
+              { 
+                fontStyle: 'italic', 
+                color: isCurrentUserMessage ? 'rgba(255,255,255,0.9)' : '#333' 
+              }
+            ]} numberOfLines={2}>
               {item.replyTo.text}
             </Text>
           </View>
         )}
-
+  
         {/* Main message text */}
-        <Text style={styles.messageText}>{item.parsedMessage.text}</Text>
-
+        <Text style={[
+          styles.messageText, 
+          { 
+            color: isCurrentUserMessage ? 'white' : 'black',
+          }
+        ]}>
+          {item.parsedMessage.text}
+        </Text>
+  
         {/* Code highlighting */}
         {item.parsedMessage.hasCode && (
           <View style={styles.codeContainer}>
             <SyntaxHighlighter
-              language={item.parsedMessage.language}
+              language={item.parsedMessage.language || 'javascript'}
+              style={atomOneLight}
               highlighter="hljs"
-              style={{
-                backgroundColor: '#f4f4f4',
-                padding: 10,
-                borderRadius: 5
-              }}
             >
               {item.parsedMessage.code}
             </SyntaxHighlighter>
           </View>
         )}
-
-        {/* Reply button */}
+  
         <TouchableOpacity 
           style={styles.replyButton}
           onPress={() => setReplyTo(item)}
         >
-          <Text style={styles.replyButtonText}>Reply</Text>
+          <Entypo 
+            name="reply" 
+            size={24} 
+            color={isCurrentUserMessage ? 'white' : 'black'} 
+          />
         </TouchableOpacity>
       </View>
     );
@@ -174,7 +266,7 @@ export default function ChatRoom() {
     <KeyboardAvoidingView 
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 64}
     >
       {/* Header */}
       <View style={styles.header}>
@@ -202,7 +294,7 @@ export default function ChatRoom() {
         contentContainerStyle={styles.messageList}
         ListEmptyComponent={() => (
           <View style={styles.emptyListContainer}>
-            <Text style={styles.emptyListText}>No messages yet</Text>
+            <ActivityIndicator size="large" color="#5865F2" />
           </View>
         )}
       />
@@ -216,13 +308,10 @@ export default function ChatRoom() {
           placeholder="Type a message... (Use ```lang code``` for syntax highlight)"
           multiline={true}
           numberOfLines={4}
-          maxLength={1000} // Optional: limit message length
+          maxLength={1000}
         />
         <TouchableOpacity 
-          style={[
-            styles.sendButton, 
-            message.trim() === '' && styles.sendButtonDisabled
-          ]} 
+          style={styles.sendButton} 
           onPress={sendMessage}
           disabled={message.trim() === ''}
         >
@@ -261,7 +350,7 @@ const styles = StyleSheet.create({
   },
   sentMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#007bff',
+    backgroundColor: '#5865F2',
   },
   receivedMessage: {
     alignSelf: 'flex-start',
@@ -269,6 +358,9 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: '#000',
+  },
+  sentMessageText: {
+    color: 'white',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -287,13 +379,10 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   sendButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#5865F2',
     borderRadius: 20,
     paddingVertical: 10,
     paddingHorizontal: 20,
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#cccccc',
   },
   sendButtonText: {
     color: 'white',
@@ -302,9 +391,10 @@ const styles = StyleSheet.create({
   replyContainer: {
     backgroundColor: '#f0f0f0',
     borderLeftWidth: 4,
-    borderLeftColor: '#007bff',
+    borderLeftColor: '#5865F2',
     paddingLeft: 10,
     marginBottom: 5,
+    borderRadius:5,
   },
   replyText: {
     fontSize: 12,
@@ -318,26 +408,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 10,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f0f0f0',
+    borderRadius:5,
   },
   replyPreviewText: {
     flex: 1,
+    padding:5,
+    
   },
   cancelReplyText: {
-    color: 'red',
+    color: 'white',
+    borderWidth: 1,
+    backgroundColor: 'red',
+    borderRadius: 5,
+    margin: 5,
+    padding:5,
+fontFamily:'outfit-bold'
   },
   codeContainer: {
     backgroundColor: '#f4f4f4',
     borderRadius: 5,
     padding: 10,
     marginTop: 5,
+    borderRadius:5,
   },
   replyButton: {
     alignSelf: 'flex-end',
     marginTop: 5,
   },
   replyButtonText: {
-    color: '#007bff',
+    color: 'black',
     fontSize: 12,
   },
   emptyListContainer: {

@@ -136,7 +136,7 @@ const SignIn = () => {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[Styles.buttonStyle, { backgroundColor: 'lightblue' }]}
+                    style={[Styles.buttonStyle, { backgroundColor: '#5865F2'}]}
                     onPress={() => router.replace("./signUp")}
                     disabled={loading || isSigningIn}
                 >

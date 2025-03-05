@@ -22,7 +22,7 @@ export default function Profile() {
     </View>
       <ScrollView showsVerticalScrollIndicator={false}>
         <TouchableOpacity
-                            style={[styles.buttonStyle, { backgroundColor: 'lightblue' }]}
+                            style={[styles.buttonStyle, { backgroundColor: '#5865F2' }]}
                             onPress={handleLogout}
                         >
                             <Text style={styles.buttonText}> Logout</Text>
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     fontSize: 35,
   },
   card: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#5865F2',
     borderRadius: 10,
     overflow: 'hidden',
     marginBottom: 16,
