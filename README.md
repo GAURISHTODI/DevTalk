@@ -1,5 +1,6 @@
 # Welcome to your Expo app 👋
 
+Here are the screens: https://1drv.ms/w/c/5e273befbc8a7ae2/EUpbWlQq51ZJl3f2HBlx-mkBRdpIH6iC8Z6Xb42bzjg27g?e=pkaFLn
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started
