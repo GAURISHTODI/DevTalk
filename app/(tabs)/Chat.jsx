@@ -7,6 +7,7 @@ import { ActivityIndicator } from 'react-native';
 import ChatList from '../components/ChatList';
 import { useAuth } from '../context/authContext';
 
+
 export default function Chat() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +68,11 @@ export default function Chat() {
   <View style={styles.noUsersContainer}>
     <Text style={styles.noChats}>No users available</Text>
   </View>
-)}
+      )}
+
+      <View>
+     
+      </View>
     </View>
   );
 }

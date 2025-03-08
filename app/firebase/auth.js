@@ -20,11 +20,18 @@ export const doCreateUserWithEmailAndPassword = async (email, password, name, ph
       gitHub,
       userId: userCredential.user.uid
     });
-    return {sucess: true, data: userCredential?.user}
+
+    ToastAndroid.show("Account Created Successfully", ToastAndroid.BOTTOM); 
+    return {
+      sucess: true,
+      data: userCredential?.user
+      
+    }
   } catch (error) {
     let msg = error.message;
     if(msg.includes('(auth/invalid-credential)')) msg="Invalid Mail"
-    console.error("Error creating user:", error);
+    // console.error("Error creating user:", error);
+     ToastAndroid.show("Email already in use", ToastAndroid.BOTTOM);
     return {sucess: false, message: error.message}
   }
 };

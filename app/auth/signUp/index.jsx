@@ -48,11 +48,11 @@ const SignUp = () => {
                 // Modify your create user function to accept name as third parameter
                 let response = await register(email, password, name, phone, gitHub)
                 console.log(response)
-                ToastAndroid.show("Account Created Successfully", ToastAndroid.BOTTOM);
+                 
                 // Navigation will be handled by useEffect
             } catch (error) {
                 setErrorMessage(error.message);
-                console.log(errorMessage);
+                // console.log(errorMessage);
                 ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
             } finally {
                 setIsSigningUp(false);

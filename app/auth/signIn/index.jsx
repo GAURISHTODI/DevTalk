@@ -51,23 +51,23 @@ const SignIn = () => {
         }
     };
 
-    const onGoogleSignIn = async () => {
-        if (!isSigningIn) {
-            setIsSigningIn(true);
-            try {
-                // Implement Google Sign-In through your existing method
-                await doSignInWithGoogle();
+    // const onGoogleSignIn = async () => {
+    //     if (!isSigningIn) {
+    //         setIsSigningIn(true);
+    //         try {
+    //             // Implement Google Sign-In through your existing method
+    //             await doSignInWithGoogle();
                 
-                // Navigation will be handled by useEffect
-                ToastAndroid.show("Google Sign-In successful!", ToastAndroid.BOTTOM);
-            } catch (error) {
-                setErrorMessage(error.message);
-                ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
-            } finally {
-                setIsSigningIn(false);
-            }
-        }
-    };
+    //             // Navigation will be handled by useEffect
+    //             ToastAndroid.show("Google Sign-In successful!", ToastAndroid.BOTTOM);
+    //         } catch (error) {
+    //             setErrorMessage(error.message);
+    //             ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
+    //         } finally {
+    //             setIsSigningIn(false);
+    //         }
+    //     }
+    // };
 
     // Prevent interaction while context is loading
     if (contextLoading) {
@@ -127,13 +127,13 @@ const SignIn = () => {
                     </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                {/* <TouchableOpacity 
                     style={[Styles.buttonStyle, (loading || isSigningIn) && { opacity: 0.7 }]} 
                     onPress={onGoogleSignIn}
                     disabled={loading || isSigningIn}
                 >
                     <Text style={Styles.buttonText}>Sign in with Google</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
 
                 <TouchableOpacity
                     style={[Styles.buttonStyle, { backgroundColor: '#5865F2'}]}

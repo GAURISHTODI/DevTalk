@@ -118,6 +118,7 @@ export const AuthProvider = ({ children }) => {
 
       await storeUserData(userData);
       console.log("User logged in successfully");
+      ToastAndroid.show("Signed in successfully!", ToastAndroid.BOTTOM);
       return userCredential.user;
     } catch (error) {
       // console.error('Login error:', error);
@@ -136,13 +137,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register method (🔥 Fixed missing parameters)
+  // Register method (Fixed missing parameters)
   const register = async (email, password, name , phoneNumber = null, gitHub = null) => {
     try {
       const user = await doCreateUserWithEmailAndPassword(email, password, name, phoneNumber, gitHub);
       return user;
     } catch (error) {
-      console.error('Registration error:', error);
+      // console.error('Registration error:', error);
       throw error;
     }
   };

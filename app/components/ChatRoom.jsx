@@ -11,9 +11,12 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
+  Linking,
+  ToastAndroid
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import Feather from '@expo/vector-icons/Feather';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../context/authContext';
 import { db } from '../firebase/firebaseConfig';
 import Entypo from '@expo/vector-icons/Entypo';
@@ -21,8 +24,7 @@ import { Highlight, themes } from 'prism-react-renderer';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-
-
+import * as Clipboard from 'expo-clipboard';
 import { 
   collection, 
   addDoc, 
@@ -32,15 +34,25 @@ import {
   onSnapshot,
   doc,
   setDoc,
-  updateDoc
+  updateDoc,
+  getDoc 
 } from 'firebase/firestore';
 
 const { width, height } = Dimensions.get('window');
 
 // CodeBlock Component for Syntax Highlighting
 const CodeBlock = ({ code, language = 'javascript' }) => {
+  const copyToClipboard = async () => {
+    await Clipboard.setStringAsync(code);
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Code copied to clipboard!', ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Copied', 'Code copied to clipboard!');
+    }
+  };
+
   return (
-    <View style={{ maxHeight: 200 }}> 
+    <View style={{ maxHeight: 400, minHeight: 100 }}> 
       <ScrollView 
         horizontal 
         style={{ 
@@ -49,49 +61,90 @@ const CodeBlock = ({ code, language = 'javascript' }) => {
           padding: 10 
         }}
       >
-        <Highlight
-          code={code}
-          language={language}
-          theme={themes.oneLight}
-        >
-          {({ tokens, getLineProps, getTokenProps }) => (
-            <View>
-              {tokens.map((line, i) => (
-                <View key={i} {...getLineProps({ line })}>
-                  {line.map((token, key) => (
-                    <Text  // This is already correct
-                      key={key} 
-                      {...getTokenProps({ token })}
-                      style={{ 
-                        fontFamily: 'monospace',
-                        fontSize: 12 
-                      }}
-                    >
-                      {token.content || ' '}
-                    </Text>
-                  ))}
-                </View>
-              ))}
-            </View>
-          )}
-        </Highlight>
+        <ScrollView style={{ flexGrow: 1 }}>
+          <Highlight
+            code={code}
+            language={language}
+            theme={themes.oneLight}
+          >
+            {({ tokens, getLineProps, getTokenProps }) => (
+              <View>
+                {tokens.map((line, i) => (
+                  <View key={i} {...getLineProps({ line })}>
+                    {line.map((token, key) => (
+                      <Text
+                        key={key} 
+                        {...getTokenProps({ token })}
+                        style={{ 
+                          fontFamily: 'monospace',
+                          fontSize: 12 
+                        }}
+                      >
+                        {token.content || ' '}
+                      </Text>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            )}
+          </Highlight>
+        </ScrollView>
       </ScrollView>
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 5 }}>
+        <TouchableOpacity 
+          onPress={copyToClipboard} 
+          style={styles.copyButton}
+        >
+          <Feather name="copy" size={24} color="black" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
+};
+
+
+// Function to format timestamp
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '';
+  
+  try {
+    const date = timestamp.toDate();
+    const now = new Date();
+    const isToday = date.getDate() === now.getDate() && 
+                  date.getMonth() === now.getMonth() && 
+                  date.getFullYear() === now.getFullYear();
+    
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const formattedHours = hours < 10 ? `0${hours}` : hours;
+    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+    
+    if (isToday) {
+      return `${formattedHours}:${formattedMinutes}`;
+    } else {
+      const day = date.getDate();
+      const month = date.getMonth() + 1;
+      return `${day}/${month} ${formattedHours}:${formattedMinutes}`;
+    }
+  } catch (error) {
+    console.error("Error formatting timestamp:", error);
+    return '';
+  }
 };
 
 export default function ChatRoom() {
   const { userTwoId, userTwoName, userTwoEmail } = useLocalSearchParams();
   const { user } = useAuth();
   const [message, setMessage] = useState('');
+  const [userTwoDetails, setUserTwoDetails] = useState();
   const [messages, setMessages] = useState([]);
   const [replyTo, setReplyTo] = useState(null);
   const [chatRoomId, setChatRoomId] = useState(null);
   const flatListRef = useRef(null);
+  const router = useRouter();
 
   // Simplified code detection regex
   const CODE_REGEX = /```(\w+)?\n?([\s\S]*?)```/;
-
 
   // Parse message for code snippets
   const parseMessage = (text) => {
@@ -149,6 +202,36 @@ export default function ChatRoom() {
     }
   }, [user.uid, userTwoId, userTwoName, userTwoEmail]);
 
+
+// Function to fetch userTwo's GitHub and contact details
+const fetchUserTwoDetails = async () => {
+  if (!userTwoId) return;
+
+  try {
+    const userRef = doc(db, 'users', userTwoId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      console.log('UserTwo Details:', userData);
+      setUserTwoDetails({
+        gitHub: userData.gitHub || 'Not available',
+        phoneNumber: userData.phoneNumber || 'Not available',
+      });
+    } else {
+      console.log('UserTwo not found');
+    }
+  } catch (error) {
+    console.error('Error fetching userTwo details:', error);
+  }
+};
+
+// Call this function inside useEffect
+useEffect(() => {
+  fetchUserTwoDetails();
+}, [userTwoId]);
+
+
   // Enhanced message fetching
   const fetchMessages = useCallback(() => {
     if (!chatRoomId) return () => {};
@@ -200,13 +283,14 @@ export default function ChatRoom() {
 
     try {
       const parsedMessage = parseMessage(message.trim());
+      const currentTimestamp = serverTimestamp();
 
       const messagesRef = collection(db, 'chatrooms', chatRoomId, 'messages');
       await addDoc(messagesRef, {
         senderId: user.uid,
         text: message.trim(),
-        createdAt: serverTimestamp(),
-        senderName: user.name  || user.displayName || user.email,
+        createdAt: currentTimestamp,
+        senderName: user.name || user.displayName || user.email,
         receiverId: userTwoId,
         replyTo: replyTo ? {
           id: replyTo.id,
@@ -216,10 +300,11 @@ export default function ChatRoom() {
         codeLanguage: parsedMessage.hasCode ? parsedMessage.language : null
       });
 
+      // Update the lastMessage and lastMessageTimestamp
       const roomRef = doc(db, 'chatrooms', chatRoomId);
       await updateDoc(roomRef, {
         lastMessage: message.trim(),
-        lastMessageTimestamp: serverTimestamp()
+        lastMessageTimestamp: currentTimestamp
       });
 
       setMessage('');
@@ -290,17 +375,31 @@ export default function ChatRoom() {
             language={item.parsedMessage.language || 'javascript'} 
           />
         )}
-  
-        <TouchableOpacity 
-          style={styles.replyButton}
-          onPress={() => setReplyTo(item)}
-        >
-          <Entypo 
-            name="reply" 
-            size={24} 
-            color={isCurrentUserMessage ? 'white' : 'black'} 
-          />
-        </TouchableOpacity>
+        
+        {/* Message footer with timestamp and reply button */}
+        <View style={styles.messageFooter}>
+          {/* Timestamp */}
+          {item.createdAt && (
+            <Text style={[
+              styles.timestampText,
+              { color: isCurrentUserMessage ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)' }
+            ]}>
+              {formatTimestamp(item.createdAt)}
+            </Text>
+          )}
+          
+          {/* Reply button */}
+          <TouchableOpacity 
+            style={styles.replyButton}
+            onPress={() => setReplyTo(item)}
+          >
+            <Entypo 
+              name="reply" 
+              size={24} 
+              color={isCurrentUserMessage ? 'white' : 'black'} 
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -313,21 +412,29 @@ export default function ChatRoom() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{userTwoName || userTwoEmail}</Text>
-        
-        <View style={{flexDirection:'row', gap: 30}}>
-          <TouchableOpacity>
-            <AntDesign name="github" size={20} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Ionicons name="call" size={20} color="black" />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <FontAwesome name="video-camera" size={20} color="black" />
-          </TouchableOpacity>
-        </View>
+      <TouchableOpacity style={{ marginTop: 10, margin: 5 }} onPress={() => router.push('/(tabs)/Chat')}>
+       <Ionicons name="arrow-back-outline" size={20} color="black" />
+     </TouchableOpacity>
+  
+      <Text style={styles.headerTitle}>{userTwoName || userTwoEmail}</Text>
 
-      </View>
+      <View style={{ flexDirection: 'row', gap: 30 }}>
+    
+    <TouchableOpacity onPress={() => Linking.openURL(userTwoDetails.gitHub)}>
+      <AntDesign name="github" size={20} color="black" />
+    </TouchableOpacity>
+
+    
+    <TouchableOpacity onPress={() => Linking.openURL(`tel:${userTwoDetails.phoneNumber}`)}>
+      <Ionicons name="call" size={20} color="black" />
+    </TouchableOpacity>
+
+    {/* Video Call (Assuming same phone number) */}
+    <TouchableOpacity onPress={() => Linking.openURL(`tel:${userTwoDetails.phoneNumber}`)}>
+      <FontAwesome name="video-camera" size={20} color="black" />
+    </TouchableOpacity>
+  </View>
+</View>
 
       {/* Reply Preview */}
       {replyTo && (
@@ -343,15 +450,14 @@ export default function ChatRoom() {
 
       {/* Messages List */}
       <FlatList
-  ref={flatListRef}
-  data={messages}
-  keyExtractor={(item) => item.id}
-  renderItem={renderMessage}
-  contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }} // Add paddingBottom for input box space
-  onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-  onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-/>
-
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={renderMessage}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }} // Add paddingBottom for input box space
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+      />
 
       {/* Input Container */}
       <View style={styles.inputContainer}>
@@ -359,7 +465,7 @@ export default function ChatRoom() {
           style={styles.input}
           value={message}
           onChangeText={setMessage}
-          placeholder="Type a message... (Use ```lang code``` for syntax highlight)"
+          placeholder="Type a message... (Use '```lang code```' for syntax highlight)"
           multiline={true}
           numberOfLines={4}
           maxLength={1000}
@@ -375,7 +481,6 @@ export default function ChatRoom() {
     </KeyboardAvoidingView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -419,7 +524,17 @@ const styles = StyleSheet.create({
   },
   sentMessageText: {
     color: 'white',
-     fontFamily:'outfit-medium'
+    fontFamily:'outfit-medium'
+  },
+  messageFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  timestampText: {
+    fontSize: 12,
+    marginRight: 10,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -453,12 +568,12 @@ const styles = StyleSheet.create({
     borderLeftColor: '#5865F2',
     paddingLeft: 10,
     marginBottom: 5,
-    borderRadius:5,
+    borderRadius: 5,
   },
   replyText: {
     fontSize: 12,
     color: 'black',
-     fontFamily:'outfit-bold'
+    fontFamily:'outfit-bold'
   },
   replyOriginalText: {
     fontSize: 14,
@@ -470,13 +585,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 10,
     backgroundColor: '#f0f0f0',
-    borderRadius:5,
+    borderRadius: 5,
   },
   replyPreviewText: {
     flex: 1,
     padding: 5,
     color:'black'
-    
   },
   cancelReplyText: {
     color: 'white',
@@ -484,19 +598,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'red',
     borderRadius: 5,
     margin: 5,
-    padding:5,
-fontFamily:'outfit-bold'
+    padding: 5,
+    fontFamily: 'outfit-bold'
   },
   codeContainer: {
     backgroundColor: '#f4f4f4',
     borderRadius: 5,
     padding: 10,
     marginTop: 5,
-    borderRadius:5,
+    borderRadius: 5,
   },
   replyButton: {
     alignSelf: 'flex-end',
-    marginTop: 5,
   },
   replyButtonText: {
     color: 'black',
@@ -511,5 +624,19 @@ fontFamily:'outfit-bold'
   emptyListText: {
     color: 'black',
     fontSize: 16,
+  },
+  copyButton: {
+    marginTop: 5,
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0',
+    paddingHorizontal: 1,
+    paddingVertical: 1,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+  },
+  copyButtonText: {
+    fontSize: 12,
+    marginLeft: 4,
+    color: '#333',
   },
 });
