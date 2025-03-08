@@ -34,13 +34,13 @@ export default function Profile() {
 
           <View style={styles.card}>
             <Text style={styles.label}>Name:</Text>
-            <Text style={styles.value}>{user?.username || 'N/A'}</Text>
+            <Text style={styles.value}>{user?.name || 'N/A'}</Text>
 
             <Text style={styles.label}>Email:</Text>
             <Text style={styles.value}>{user?.email || 'N/A'}</Text>
 
             <Text style={styles.label}>GitHub ID:</Text>
-            <Text style={styles.value}>{user?.gitHubId || 'N/A'}</Text>
+            <Text style={styles.value}>{user?.gitHub || 'N/A'}</Text>
 
             <Text style={styles.label}>Phone Number:</Text>
             <Text style={styles.value}>{user?.phoneNumber || 'N/A'}</Text>
@@ -68,20 +68,21 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: 'white',
     padding: 16,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginLeft: 10,
+    marginBottom: 20
   },
   titles: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#333',
+    fontFamily: 'outfit-bold',
+    fontSize: 35,
   },
+
   profileCard: {
     alignItems: 'center',
     marginTop: 20,
@@ -90,6 +91,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 15,
+    fontFamily:'outfit-bold'
   },
   card: {
     width: '100%',
@@ -107,11 +109,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 10,
     color: '#333',
+    fontFamily:'outfit-bold'
   },
   value: {
     fontSize: 16,
     marginBottom: 10,
     color: '#555',
+    fontFamily:'outfit-medium'
   },
   buttonStyle: {
     marginTop: 20,
@@ -119,6 +123,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: '100%',
     alignItems: 'center',
+    
   },
   button: {
     marginTop: 20,
@@ -132,6 +137,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily:'outfit-medium'
   },
 });
 

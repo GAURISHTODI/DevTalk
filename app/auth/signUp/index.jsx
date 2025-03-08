@@ -12,7 +12,7 @@ const SignUp = () => {
 
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('')
-    const [github, setGithub]= useState('')
+    const [gitHub, setGitHub]= useState('')
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSigningUp, setIsSigningUp] = useState(false);
@@ -46,7 +46,7 @@ const SignUp = () => {
             
             try {
                 // Modify your create user function to accept name as third parameter
-                let response = await register(email, password, name, phone, github)
+                let response = await register(email, password, name, phone, gitHub)
                 console.log(response)
                 ToastAndroid.show("Account Created Successfully", ToastAndroid.BOTTOM);
                 // Navigation will be handled by useEffect
@@ -125,8 +125,8 @@ const SignUp = () => {
                 <TextInput 
                     style={Styles.input} 
                     placeholder='Enter GitHub ID'
-                    value={github}
-                    onChangeText={setGithub}
+                    value={gitHub}
+                    onChangeText={setGitHub}
                 />
 
                 <View style={{ marginTop: 0 }}>

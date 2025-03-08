@@ -42,8 +42,8 @@ const SignIn = () => {
                 // Navigation will be handled by useEffect
                 ToastAndroid.show("Signed in successfully!", ToastAndroid.BOTTOM);
             } catch (error) {
-                setErrorMessage(error.message);
-                ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
+                // setErrorMessage(error.message);
+                // ToastAndroid.show(error.message, ToastAndroid.BOTTOM);
             } finally {
                 setIsSigningIn(false);
                 setIsLoading(false);

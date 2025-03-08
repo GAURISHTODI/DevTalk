@@ -48,7 +48,7 @@ export default function Chat() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size='large' color="lightblue" />
+        <ActivityIndicator size='large' color="#5865F2" />
       </View>
     );
   }

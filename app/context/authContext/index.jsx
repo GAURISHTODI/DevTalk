@@ -5,7 +5,7 @@ import { auth } from './../../firebase/firebaseConfig';
 import { doCreateUserWithEmailAndPassword, doSignInWithEmailAndPassword } from './../../firebase/auth';
 import { useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from './../../firebase/firebaseConfig'; // 🔥 Added missing import
+import { db } from './../../firebase/firebaseConfig'; 
 
 const AuthContext = createContext();
 
@@ -35,12 +35,12 @@ export const AuthProvider = ({ children }) => {
       if (docSnap.exists()) {
         let data = docSnap.data();
 
-        // 🔥 Ensure githubId and phoneNumber default to null if they don’t exist
+        // Ensure github and phoneNumber default to null if they don’t exist
         setUser((prevUser) => ({
           ...prevUser,
-          username: data.name || '',
+          name: data.name || '',
           userId: data.userID || '',
-          githubId: data.githubId || null,
+          gitHub: data.gitHub|| null,
           phoneNumber: data.phoneNumber || null,
         }));
       }
@@ -84,9 +84,9 @@ export const AuthProvider = ({ children }) => {
         const userData = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
-          displayName: firebaseUser.displayName || '',
+          displayName: firebaseUser.name || 'N/A',
         };
-        console.log("Here is my user's data", userData);
+        // console.log("Here is my user's data", userData);
         await storeUserData(userData);
         await updateUserData(userData.uid);
       } else {
@@ -113,15 +113,15 @@ export const AuthProvider = ({ children }) => {
       const userData = {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
-        displayName: userCredential.user.displayName || '',
+        name: userCredential.user.name || '',
       };
 
       await storeUserData(userData);
       console.log("User logged in successfully");
       return userCredential.user;
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      // console.error('Login error:', error);
+      // throw error;
     }
   };
 
@@ -137,9 +137,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register method (🔥 Fixed missing parameters)
-  const register = async (email, password, username , phoneNumber = null, githubId = null) => {
+  const register = async (email, password, name , phoneNumber = null, gitHub = null) => {
     try {
-      const user = await doCreateUserWithEmailAndPassword(email, password, username, phoneNumber, githubId);
+      const user = await doCreateUserWithEmailAndPassword(email, password, name, phoneNumber, gitHub);
       return user;
     } catch (error) {
       console.error('Registration error:', error);
