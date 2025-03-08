@@ -39,8 +39,6 @@ const SignIn = () => {
                 // Use the login method from AuthContext
                 await login(email, password);
                 
-                // Navigation will be handled by useEffect
-                ToastAndroid.show("Signed in successfully!", ToastAndroid.BOTTOM);
             } catch (error) {
                 // setErrorMessage(error.message);
                 // ToastAndroid.show(error.message, ToastAndroid.BOTTOM);

@@ -48,7 +48,6 @@ const SignUp = () => {
                 // Modify your create user function to accept name as third parameter
                 let response = await register(email, password, name, phone, gitHub)
                 console.log(response)
-                 
                 // Navigation will be handled by useEffect
             } catch (error) {
                 setErrorMessage(error.message);
