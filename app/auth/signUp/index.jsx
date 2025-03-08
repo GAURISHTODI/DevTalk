@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/authContext';
-import { doCreateUserWithEmailAndPassword } from '../../firebase/auth';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
 const SignUp = () => {

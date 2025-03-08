@@ -1,12 +1,30 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  
-  getAuth
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc} from 'firebase/firestore';
 import { auth, db } from './firebaseConfig';
 import { ToastAndroid } from 'react-native';
+
+export const doSignInWithEmailAndPassword = async (email, password) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential; // Return user credential if login is successful
+  } catch (error) {
+    // Display a toast message instead of logging the error
+    if (error.code === 'auth/invalid-credential') {
+      ToastAndroid.show("These credentials are invalid. Please try again.", ToastAndroid.SHORT);
+    } else {
+      ToastAndroid.show("An error occurred. Please try again later.", ToastAndroid.SHORT);
+    }
+
+    // Remove console.error to prevent logging in the console
+    // console.error("Login Error:", error); 
+
+    throw error; // Here I am still throwing error 
+  }
+};
+
 
 export const doCreateUserWithEmailAndPassword = async (email, password, name, phoneNumber, gitHub) => {
   try {
@@ -36,24 +54,7 @@ export const doCreateUserWithEmailAndPassword = async (email, password, name, ph
   }
 };
 
-export const doSignInWithEmailAndPassword = async (email, password) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential; // Return user credential if login is successful
-  } catch (error) {
-    // Display a toast message instead of logging the error
-    if (error.code === 'auth/invalid-credential') {
-      ToastAndroid.show("These credentials are invalid. Please try again.", ToastAndroid.SHORT);
-    } else {
-      ToastAndroid.show("An error occurred. Please try again later.", ToastAndroid.SHORT);
-    }
 
-    // Remove console.error to prevent logging in the console
-    // console.error("Login Error:", error);  <-- REMOVE THIS
-
-    throw error; // Still throwing error if the calling function needs to handle it
-  }
-};
 
 
 

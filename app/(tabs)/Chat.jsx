@@ -18,7 +18,6 @@ export default function Chat() {
       // Fetch users excluding the current user
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('userId', '!=', user.uid));
-      
       const querySnapshot = await getDocs(q);
       
       const fetchedUsers = querySnapshot.docs.map(doc => ({
@@ -70,9 +69,6 @@ export default function Chat() {
   </View>
       )}
 
-      <View>
-     
-      </View>
     </View>
   );
 }

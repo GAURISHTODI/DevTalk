@@ -20,11 +20,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../context/authContext';
 import { db } from '../firebase/firebaseConfig';
 import Entypo from '@expo/vector-icons/Entypo';
-import { Highlight, themes } from 'prism-react-renderer';
+import { Highlight, themes } from 'prism-react-renderer';//for code snippets
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import * as Clipboard from 'expo-clipboard';
+import * as Clipboard from 'expo-clipboard';//clipboard API
 import { 
   collection, 
   addDoc, 

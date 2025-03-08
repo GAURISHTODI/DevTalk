@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './../../firebase/firebaseConfig'; 
 
-const AuthContext = createContext();
+const AuthContext = createContext();//I have used context API's method
 
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Store user data in AsyncStorage
+  // Here I am storing user data in AsyncStorage
   const storeUserData = async (userData) => {
     try {
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
@@ -35,9 +35,9 @@ export const AuthProvider = ({ children }) => {
       if (docSnap.exists()) {
         let data = docSnap.data();
 
-        // Ensure github and phoneNumber default to null if they don’t exist
+      //Here, github and phoneNumber default to null (part of aysnc setup)
         setUser((prevUser) => ({
-          ...prevUser,
+          ...prevUser,// added spread operators
           name: data.name || '',
           userId: data.userID || '',
           gitHub: data.gitHub|| null,
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }) => {
     // Initial check for stored user data
     getUserData();
 
-    return () => unsubscribe();
+    return () => unsubscribe();//clean up logic
   }, []);
 
   // Login method
@@ -126,6 +126,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Register method (Fixed missing parameters)
+  const register = async (email, password, name , phoneNumber = null, gitHub = null) => {
+    try {
+      const user = await doCreateUserWithEmailAndPassword(email, password, name, phoneNumber, gitHub);
+      return user;
+    } catch (error) {
+      // console.error('Registration error:', error);
+      throw error;
+    }
+  };
+  
   // Logout method
   const logout = async () => {
     try {
@@ -137,16 +148,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register method (Fixed missing parameters)
-  const register = async (email, password, name , phoneNumber = null, gitHub = null) => {
-    try {
-      const user = await doCreateUserWithEmailAndPassword(email, password, name, phoneNumber, gitHub);
-      return user;
-    } catch (error) {
-      // console.error('Registration error:', error);
-      throw error;
-    }
-  };
+  
 
   return (
     <AuthContext.Provider

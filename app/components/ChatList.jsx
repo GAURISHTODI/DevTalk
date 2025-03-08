@@ -21,12 +21,11 @@ useEffect(() => {
     const q = query(
       chatroomsRef, 
       where('participants', 'array-contains', user.uid),
-      orderBy('lastMessageTimestamp', 'desc')
+      orderBy('lastMessageTimestamp', 'desc')//desc is descendingS
     );
 
     const unsubscribe = onSnapshot(
-      q, 
-      (querySnapshot) => {
+      q,(querySnapshot) => {
         const roomsData = {};
         querySnapshot.forEach((doc) => {
           const data = doc.data();
@@ -84,7 +83,7 @@ useEffect(() => {
     }
   };
 
-  // Truncate long messages for preview
+  // Here I am truncating long messages for preview
   const truncateMessage = (message, maxLength = 35) => {
     if (!message) return '';
     if (message.length <= maxLength) return message;

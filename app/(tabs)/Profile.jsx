@@ -1,7 +1,5 @@
 import React from 'react';
-import { 
-  View, Text, StyleSheet, StatusBar, TouchableOpacity, ScrollView, SafeAreaView 
-} from 'react-native';
+import { View, Text, StyleSheet, StatusBar, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useAuth } from '../context/authContext';
 import { useNavigation } from '@react-navigation/native';
@@ -19,16 +17,14 @@ export default function Profile() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.titles}>Profile</Text>
         <Ionicons name="person" size={29} color="black" style={{ marginRight: 10 }} />
       </View>
 
-      {/* Scrollable Content */}
+      
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* Profile Details */}
         <View style={styles.profileCard}>
           <Text style={styles.heading}>Profile Information</Text>
 
@@ -46,12 +42,10 @@ export default function Profile() {
             <Text style={styles.value}>{user?.phoneNumber || 'N/A'}</Text>
           </View>
 
-          
-
           <TouchableOpacity
           style={[styles.buttonStyle, { backgroundColor: '#5865F2' }]}
-          onPress={handleLogout}
-        >
+            onPress={handleLogout} >
+            
           <Text style={styles.buttonText}>Logout</Text>
           </TouchableOpacity>
           
